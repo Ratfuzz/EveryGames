@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Viewer</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f4f4f5;
+        }
+
+        /* Top Bar Styling */
+        #topbar {
+            display: flex;
+            width: 100%;
+            background-color: #e5e7eb; /* Light grey base */
+            flex-shrink: 0;
+            border-bottom: 1px solid #a1a1aa;
+        }
+
+        /* Button Container */
+        #closest-pages {
+            display: flex;
+            flex-grow: 1; /* Takes up all remaining space */
+        }
+
+        /* Shared Button & Current Page Styling */
+        #closest-pages button, #closest-pages .current-page {
+            flex: 1; /* Stretches buttons evenly */
+            margin: 0; 
+            padding: 12px 0;
+            border: none;
+            border-right: 1px solid #a1a1aa; /* Darker grey separator */
+            border-radius: 0;
+            background-color: #e5e7eb; /* Light grey */
+            color: #000000; /* Black text */
+            font-size: 14px;
+            font-family: inherit;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #closest-pages button:hover {
+            background-color: #d1d5db; /* Slightly darker grey on hover */
+        }
+
+        /* Distinct Styling for Current Page */
+        #closest-pages .current-page {
+            background-color: #4488ff; /* White to show it's active */
+            font-weight: bold;
+            cursor: default;
+        }
+
+        /* Dropdown Styling - matching the buttons exactly */
+        #page-dropdown {
+            background-color: #e5e7eb;
+            color: #000000;
+            border: none;
+            border-left: 1px solid #a1a1aa; /* Left border since it's on the far right */
+            border-radius: 0;
+            padding: 0 20px;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            outline: none;
+            transition: background-color 0.2s;
+            appearance: auto;
+        }
+
+        #page-dropdown:hover {
+            background-color: #d1d5db;
+        }
+
+        /* Iframe Styling */
+        #content-frame {
+            flex-grow: 1;
+            width: 100%;
+            border: none;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="topbar">
+        <!-- Buttons will take up the left/middle -->
+        <div id="closest-pages"></div>
+        
+        <!-- Dropdown on the far right, matching button styles -->
+        <select id="page-dropdown" title="Jump to page"></select>
+    </div>
+
+    <iframe id="content-frame" src="1.html"></iframe>
+
+    <script>
+        const totalPages = 75;
+        let currentPage = 1;
+
+        const dropdown = document.getElementById('page-dropdown');
+        const closestPagesContainer = document.getElementById('closest-pages');
+        const iframe = document.getElementById('content-frame');
+
+        // Helper function to get ordinal suffixes (1st, 2nd, 3rd, 4th...)
+        function getOrdinal(n) {
+            const j = n % 10, k = n % 100;
+            if (j == 1 && k != 11) {
+                return n + "st";
+            }
+            if (j == 2 && k != 12) {
+                return n + "nd";
+            }
+            if (j == 3 && k != 13) {
+                return n + "rd";
+            }
+            return n + "th";
+        }
+
+        // Populate the dropdown with options 1st to 75th
+        for (let i = 1; i <= totalPages; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = getOrdinal(i);
+            dropdown.appendChild(option);
+        }
+
+        // Listen for dropdown changes
+        dropdown.addEventListener('change', (e) => {
+            loadPage(parseInt(e.target.value));
+        });
+
+        // Main function to load a page and update the UI
+        function loadPage(pageNum) {
+            if (pageNum < 1 || pageNum > totalPages) return;
+            
+            currentPage = pageNum;
+            // Still loading the actual HTML files as 1.html, 2.html, etc.
+            iframe.src = currentPage + '.html';
+            dropdown.value = currentPage;
+            renderClosestPages();
+        }
+
+        // Calculate and render the 4 closest pages + current page
+        function renderClosestPages() {
+            closestPagesContainer.innerHTML = '';
+            
+            // Logic to ensure we always show 5 items total, centered on the current page
+            let start = Math.max(1, currentPage - 2);
+            let end = Math.min(totalPages, currentPage + 2);
+            
+            // Adjust edges to maintain 5 visible tabs if possible
+            if (currentPage <= 2) {
+                end = Math.min(totalPages, 5);
+            } else if (currentPage >= totalPages - 1) {
+                start = Math.max(1, totalPages - 4);
+            }
+
+            for (let i = start; i <= end; i++) {
+                const labelText = getOrdinal(i);
+                
+                if (i === currentPage) {
+                    const currentDiv = document.createElement('div');
+                    currentDiv.className = 'current-page';
+                    currentDiv.textContent = labelText;
+                    closestPagesContainer.appendChild(currentDiv);
+                } else {
+                    const btn = document.createElement('button');
+                    btn.textContent = labelText;
+                    btn.onclick = () => loadPage(i);
+                    closestPagesContainer.appendChild(btn);
+                }
+            }
+        }
+
+        // Initialize the page on load
+        loadPage(1);
+    </script>
+</body>
+</html>
